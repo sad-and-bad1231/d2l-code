@@ -1,15 +1,13 @@
-"""D2L 第 9 章代码整理版。
+"""Chapter 9: 现代循环神经网络。
 
-本文件保留书中的核心实现思路，但做了两类整理：
-1. 给关键步骤补充了中文注释，方便把“公式”和“代码”一一对应起来；
-2. 将“模型定义”和“训练/演示代码”分开，避免 import 本文件时直接开始长时间训练。
+- GRU
+- LSTM
+- 机器翻译与数据处理
+- 编码器-解码器
+- seq2seq
+- others
 
-说明：
-- 训练设备默认使用 `mini_d2l.try_gpu()`，在服务器/Colab 上会优先用 GPU；
-- 如果本机没有 GPU，会自动退回 CPU，只是训练会明显变慢；
-- 默认入口只做轻量检查；真正训练时，再手动调用对应函数。
 """
-
 import collections
 import math
 import os
@@ -681,23 +679,19 @@ def run_seq2seq_translation():
 
 
 def main():
-    """按需取消注释运行某个小节。
+    """默认只打印可选入口。
 
-    默认只做轻量检查，避免你在本机误触发 CPU 长时间训练。
-    如果当前环境暂时无法联网下载数据，也不会因为数据集缺失而直接崩溃。
+    本章里既有语言模型长训练，也有机器翻译数据下载。
+    因此直接运行脚本时不自动开跑，只给出可选函数列表。
     """
-    inspect_seq2seq_shapes()
-    try:
-        inspect_nmt_batch()
-    except Exception as err:
-        print(f"跳过 NMT 数据检查：{err}")
-        print("如需运行该部分，请确认当前环境可联网，并允许在项目目录下创建 data 缓存。")
-
-    # 以下训练都比较慢，尤其在 CPU 上。
-    # run_gru_scratch()
-    # run_lstm_scratch()
-    # run_multilayer_lstm()
-    # run_seq2seq_translation()
+    print("Chapter 9 可用入口：")
+    print("- inspect_seq2seq_shapes()")
+    print("- inspect_nmt_batch()")
+    print("- run_gru_scratch()")
+    print("- run_lstm_scratch()")
+    print("- run_multilayer_lstm()")
+    print("- run_seq2seq_translation()")
+    print("注意：NMT 相关函数第一次运行会联网下载 `fra-eng` 数据集。")
 
 
 if __name__ == "__main__":

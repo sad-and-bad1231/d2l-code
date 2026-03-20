@@ -1,6 +1,5 @@
 """Chapter 6: 卷积神经网络。
 
-本文件整理了第 6 章的核心内容:
 1. 二维互相关
 2. 自定义卷积层
 3. 填充与步幅辅助函数
@@ -12,7 +11,6 @@
 
 import torch
 from torch import nn
-
 import mini_d2l as d2l
 
 
@@ -261,10 +259,14 @@ def run_lenet(device=None):
     train_ch6(net, train_iter, test_iter, num_epochs, lr, device)
 
 
+def main():
+    """默认只打印可选入口，避免直接运行时进入训练。"""
+    print("Chapter 6 可用入口：")
+    print("- demo_corr2d()")
+    print("- learn_kernel()")
+    print("- demo_pool2d()")
+    print("- run_lenet()")
+
+
 if __name__ == "__main__":
-    # 按需取消注释。
-    # demo_corr2d()
-    # learn_kernel()
-    # demo_pool2d()
-    # run_lenet()
-    print("chapter6.py 已切换为不依赖 d2l。请按需取消注释对应示例。")
+    main()

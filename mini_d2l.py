@@ -143,6 +143,101 @@ class Animator:
         plt.show()
 
 
+def plot(
+    X,
+    Y=None,
+    xlabel=None,
+    ylabel=None,
+    legend=None,
+    xlim=None,
+    ylim=None,
+    xscale="linear",
+    yscale="linear",
+    fmts=None,
+    figsize=(3.5, 2.5),
+) -> None:
+    """轻量绘图辅助函数。
+
+    这个函数只覆盖当前项目里常见的折线图需求：
+    - 支持单条或多条曲线；
+    - 支持共享同一个 X；
+    - 支持最基本的坐标轴、图例与范围设置。
+    """
+
+    if Y is None:
+        Y = X
+        X = None
+
+    if not isinstance(Y, (list, tuple)):
+        Y = [Y]
+
+    if fmts is None:
+        fmts = ["-"] * len(Y)
+
+    plt.figure(figsize=figsize)
+    for idx, y in enumerate(Y):
+        fmt = fmts[idx] if idx < len(fmts) else "-"
+        label = legend[idx] if legend and idx < len(legend) else None
+
+        if X is None:
+            plt.plot(y, fmt, label=label)
+        elif isinstance(X, (list, tuple)) and len(X) == len(Y):
+            plt.plot(X[idx], y, fmt, label=label)
+        else:
+            plt.plot(X, y, fmt, label=label)
+
+    if xlabel:
+        plt.xlabel(xlabel)
+    if ylabel:
+        plt.ylabel(ylabel)
+    if xlim:
+        plt.xlim(xlim)
+    if ylim:
+        plt.ylim(ylim)
+    plt.xscale(xscale)
+    plt.yscale(yscale)
+    if legend:
+        plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def show_heatmaps(
+    matrices,
+    xlabel,
+    ylabel,
+    titles=None,
+    figsize=(2.5, 2.5),
+    cmap="Reds",
+) -> None:
+    """显示一组注意力热图。
+
+    `matrices` 常见形状为 `(num_rows, num_cols, query_len, key_len)`。
+    前两维用于控制子图排布，后两维是真正要可视化的矩阵。
+    """
+
+    num_rows, num_cols = matrices.shape[0], matrices.shape[1]
+    fig, axes = plt.subplots(
+        num_rows, num_cols, figsize=figsize, sharex=True, sharey=True, squeeze=False
+    )
+
+    pcm = None
+    for i, (row_axes, row_matrices) in enumerate(zip(axes, matrices)):
+        for j, (ax, matrix) in enumerate(zip(row_axes, row_matrices)):
+            pcm = ax.imshow(matrix.detach().cpu().numpy(), cmap=cmap)
+            if i == num_rows - 1:
+                ax.set_xlabel(xlabel)
+            if j == 0:
+                ax.set_ylabel(ylabel)
+            if titles and j < len(titles):
+                ax.set_title(titles[j])
+
+    if pcm is not None:
+        fig.colorbar(pcm, ax=axes, shrink=0.6)
+    plt.tight_layout()
+    plt.show()
+
+
 def grad_clipping(net, theta: float) -> None:
     """裁剪梯度范数，避免 RNN 梯度爆炸。"""
     if isinstance(net, nn.Module):
@@ -236,23 +331,35 @@ class Vocab:
 
 
 def count_corpus(tokens) -> collections.Counter:
+    """统计语料中每个 token 的出现频次。"""
     if tokens and isinstance(tokens[0], list):
         tokens = [token for line in tokens for token in line]
     return collections.Counter(tokens)
 
 
 def truncate_pad(line, num_steps: int, padding_token: int):
+    """把一条序列截断或补齐到固定长度。"""
     if len(line) > num_steps:
         return line[:num_steps]
     return line + [padding_token] * (num_steps - len(line))
 
 
+def sequence_mask(X, valid_len, value=0):
+    """按有效长度屏蔽张量中的无效位置。"""
+    maxlen = X.size(1)
+    mask = torch.arange(maxlen, device=X.device)[None, :] < valid_len[:, None]
+    X[~mask] = value
+    return X
+
+
 def load_array(data_arrays, batch_size: int, is_train: bool = True):
+    """基于张量构造小批量数据迭代器。"""
     dataset = data.TensorDataset(*data_arrays)
     return data.DataLoader(dataset, batch_size, shuffle=is_train)
 
 
 def synthetic_data(w, b, num_examples):
+    """生成线性回归的人造数据。"""
     X = torch.normal(0, 1, (num_examples, len(w)))
     y = torch.matmul(X, w) + b
     y += torch.normal(0, 0.01, y.shape)
@@ -260,14 +367,17 @@ def synthetic_data(w, b, num_examples):
 
 
 def linreg(X, w, b):
+    """线性回归模型。"""
     return torch.matmul(X, w) + b
 
 
 def squared_loss(y_hat, y):
+    """平方损失。"""
     return (y_hat - y.reshape(y_hat.shape)) ** 2 / 2
 
 
 def accuracy(y_hat, y):
+    """统计预测正确的样本个数。"""
     if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
         y_hat = y_hat.argmax(axis=1)
     cmp = y_hat.type(y.dtype) == y
@@ -275,6 +385,7 @@ def accuracy(y_hat, y):
 
 
 def evaluate_accuracy(net, data_iter):
+    """评估模型在数据集上的准确率。"""
     if isinstance(net, nn.Module):
         net.eval()
     metric = Accumulator(2)
@@ -285,6 +396,7 @@ def evaluate_accuracy(net, data_iter):
 
 
 def train_epoch_ch3(net, train_iter, loss, updater):
+    """训练一个 epoch，并返回平均损失与准确率。"""
     if isinstance(net, nn.Module):
         net.train()
     metric = Accumulator(3)
@@ -303,6 +415,7 @@ def train_epoch_ch3(net, train_iter, loss, updater):
 
 
 def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):
+    """Chapter 3/4 常用分类训练循环。"""
     animator = Animator(
         xlabel="epoch",
         xlim=[1, num_epochs],
@@ -317,6 +430,7 @@ def train_ch3(net, train_iter, test_iter, loss, num_epochs, updater):
 
 
 def evaluate_loss(net, data_iter, loss):
+    """评估模型在数据集上的平均损失。"""
     metric = Accumulator(2)
     for X, y in data_iter:
         out = net(X)
@@ -327,6 +441,7 @@ def evaluate_loss(net, data_iter, loss):
 
 
 def get_fashion_mnist_labels(labels):
+    """把 Fashion-MNIST 数字标签转成文本标签。"""
     text_labels = [
         "t-shirt",
         "trouser",
@@ -343,6 +458,7 @@ def get_fashion_mnist_labels(labels):
 
 
 def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
+    """显示一组图像。"""
     figsize = (num_cols * scale, num_rows * scale)
     _, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
     axes = axes.flatten() if hasattr(axes, "flatten") else [axes]
@@ -359,6 +475,7 @@ def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
 
 
 def load_data_fashion_mnist(batch_size, resize=None, root: Path | str = DATA_DIR / "fashion-mnist"):
+    """下载并加载 Fashion-MNIST。"""
     trans = [transforms.ToTensor()]
     if resize:
         trans.insert(0, transforms.Resize(resize))
@@ -387,6 +504,7 @@ def read_time_machine() -> list[str]:
 
 
 def load_corpus_time_machine(max_tokens: int = -1):
+    """把《时光机器》语料转成字符索引序列。"""
     lines = read_time_machine()
     tokens = tokenize(lines, "char")
     vocab = Vocab(tokens)
@@ -397,6 +515,7 @@ def load_corpus_time_machine(max_tokens: int = -1):
 
 
 def seq_data_iter_sequential(corpus, batch_size: int, num_steps: int):
+    """按顺序切分语料，构造相邻子序列批量。"""
     offset = random.randint(0, num_steps)
     num_tokens = ((len(corpus) - offset - 1) // batch_size) * batch_size
     Xs = torch.tensor(corpus[offset: offset + num_tokens])
@@ -411,6 +530,8 @@ def seq_data_iter_sequential(corpus, batch_size: int, num_steps: int):
 
 
 class SeqDataLoader:
+    """《时光机器》顺序采样数据加载器。"""
+
     def __init__(self, batch_size: int, num_steps: int, max_tokens: int = 10000):
         self.corpus, self.vocab = load_corpus_time_machine(max_tokens)
         self.batch_size = batch_size
@@ -421,6 +542,7 @@ class SeqDataLoader:
 
 
 def load_data_time_machine(batch_size: int, num_steps: int, max_tokens: int = 10000):
+    """返回《时光机器》数据迭代器与词表。"""
     data_iter = SeqDataLoader(batch_size, num_steps, max_tokens)
     return data_iter, data_iter.vocab
 
@@ -472,6 +594,7 @@ class RNNModel(nn.Module):
 
 
 def predict_ch8(prefix, num_preds, net, vocab, device):
+    """根据前缀自回归生成后续字符。"""
     state = net.begin_state(batch_size=1, device=device)
     outputs = [vocab[prefix[0]]]
 
@@ -488,6 +611,7 @@ def predict_ch8(prefix, num_preds, net, vocab, device):
 
 
 def train_epoch_ch8(net, train_iter, loss, updater, device, use_random_iter=False):
+    """训练字符级语言模型的一个 epoch。"""
     state, timer = None, Timer()
     metric = Accumulator(2)
     for X, Y in train_iter:
@@ -517,6 +641,7 @@ def train_epoch_ch8(net, train_iter, loss, updater, device, use_random_iter=Fals
 
 
 def train_ch8(net, train_iter, vocab, lr, num_epochs, device, use_random_iter=False):
+    """训练 Chapter 8/9 中使用的字符级语言模型。"""
     loss = nn.CrossEntropyLoss()
     if isinstance(net, nn.Module):
         updater = torch.optim.SGD(net.parameters(), lr)
@@ -533,6 +658,7 @@ def train_ch8(net, train_iter, vocab, lr, num_epochs, device, use_random_iter=Fa
 
 
 def sgd(params, lr: float, batch_size: int) -> None:
+    """从零实现的小批量随机梯度下降。"""
     with torch.no_grad():
         for param in params:
             param -= lr * param.grad / batch_size
@@ -540,6 +666,7 @@ def sgd(params, lr: float, batch_size: int) -> None:
 
 
 def evaluate_accuracy_gpu(net, data_iter, device=None):
+    """在 GPU 或指定设备上评估分类准确率。"""
     if isinstance(net, nn.Module):
         net.eval()
         if device is None:
@@ -557,6 +684,7 @@ def evaluate_accuracy_gpu(net, data_iter, device=None):
 
 
 def train_ch6(net, train_iter, test_iter, num_epochs, lr, device):
+    """Chapter 6/7 通用卷积网络训练循环。"""
     def init_weights(module):
         if isinstance(module, (nn.Linear, nn.Conv2d)):
             nn.init.xavier_uniform_(module.weight)

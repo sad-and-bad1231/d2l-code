@@ -1,7 +1,6 @@
 """
 Chapter 4: 多层感知机与正则化。
 
-内容按学习顺序整理:
 1. MLP 从零实现
 2. MLP 简洁实现
 3. 多项式回归
@@ -11,11 +10,9 @@ Chapter 4: 多层感知机与正则化。
 """
 
 import math
-
 import numpy as np
 import torch
 from torch import nn
-
 import mini_d2l as d2l
 
 
@@ -351,11 +348,16 @@ def run_dropout_concise():
     d2l.train_ch3(net, train_iter, test_iter, loss, num_epochs, trainer)
 
 
+def main():
+    """默认只打印可选入口，避免一次性启动多个训练实验。"""
+    print("Chapter 4 可用入口：")
+    print("- run_mlp_scratch()")
+    print("- run_mlp_concise()")
+    print("- run_polynomial_regression()")
+    print("- run_weight_decay()")
+    print("- run_dropout_scratch()")
+    print("- run_dropout_concise()")
+
+
 if __name__ == "__main__":
-    # 按需取消注释，只运行当前学习的小节。
-    # run_mlp_scratch()
-    # run_mlp_concise()
-    # run_polynomial_regression()
-    # run_weight_decay()
-    # run_dropout_concise()
-    print("chapter4.py 已切换为不依赖 d2l。请按需取消注释对应示例。")
+    main()

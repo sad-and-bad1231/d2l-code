@@ -1,7 +1,5 @@
 """
 Chapter 3: 线性回归与 softmax 回归。
-
-本文件按 d2l 第 3 章的学习顺序整理:
 1. 线性回归从零实现
 2. 线性回归简洁实现
 3. softmax 回归从零实现
@@ -9,11 +7,9 @@ Chapter 3: 线性回归与 softmax 回归。
 
 """
 import random
-
 import torch
 from torch import nn
 from torch.utils import data
-
 import mini_d2l as d2l
 
 
@@ -265,10 +261,17 @@ def run_softmax_regression_concise():
     predict_ch3(net, test_iter)
 
 
+def main():
+    """默认只打印可选入口。
+
+    这样在本地或 Colab 里直接执行脚本时，不会自动下载数据并把所有实验全部跑一遍。
+    """
+    print("Chapter 3 可用入口：")
+    print("- run_linear_regression_scratch()")
+    print("- run_linear_regression_concise()")
+    print("- run_softmax_regression_scratch()")
+    print("- run_softmax_regression_concise()")
+
+
 if __name__ == "__main__":
-    # 按需取消注释，只运行你当前学习的部分。
-    # run_linear_regression_scratch()
-    # run_linear_regression_concise()
-    # run_softmax_regression_scratch()
-    # run_softmax_regression_concise()
-    print("chapter3.py 已切换为不依赖 d2l。请按需取消注释对应示例。")
+    main()
