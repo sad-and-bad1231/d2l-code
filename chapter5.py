@@ -1,6 +1,5 @@
 """Chapter 5: 深度学习计算。
 
-本文件保留 D2L 第 5 章的常见教学内容，但实现不依赖 d2l:
 1. 层和块
 2. 参数管理
 3. 延后初始化与自定义层
@@ -8,10 +7,11 @@
 5. GPU 设备使用
 """
 
+from pathlib import Path
+
 import torch
 from torch import nn
 from torch.nn import functional as F
-
 import mini_d2l as d2l
 
 
@@ -44,7 +44,9 @@ class MySequential(nn.Module):
 class FixedHiddenMLP(nn.Module):
     def __init__(self):
         super().__init__()
-        self.rand_weight = torch.rand((20, 20), requires_grad=False)
+        # 这里是固定随机权重，不参与训练，但需要随着 `.to(device)` 一起迁移设备，
+        # 因此应注册为 buffer，而不是普通张量属性。
+        self.register_buffer("rand_weight", torch.rand((20, 20)))
         self.linear = nn.Linear(20, 20)
 
     def forward(self, X):
@@ -78,7 +80,8 @@ class MyLinear(nn.Module):
         self.bias = nn.Parameter(torch.randn(units))
 
     def forward(self, X):
-        linear = torch.matmul(X, self.weight.data) + self.bias.data
+        # 这里直接使用 Parameter 本身，保留 autograd 跟踪能力。
+        linear = torch.matmul(X, self.weight) + self.bias
         return F.relu(linear)
 
 
@@ -110,15 +113,20 @@ def demo_composition():
 
 
 def save_and_load_parameters():
+    """演示参数保存与加载。
+
+    参数文件固定写到当前章节脚本所在目录，避免在 Colab 中因为工作目录变化而找不到文件。
+    """
     X = torch.randn(size=(2, 20))
     net = build_mlp()
     _ = net(X)
-    torch.save(net.state_dict(), "mlp.params")
+    param_path = Path(__file__).resolve().parent / "mlp.params"
+    torch.save(net.state_dict(), param_path)
 
     clone = build_mlp()
-    clone.load_state_dict(torch.load("mlp.params"))
+    clone.load_state_dict(torch.load(param_path, map_location="cpu"))
     clone.eval()
-    print("parameter file saved and reloaded successfully")
+    print(f"parameter file saved and reloaded successfully: {param_path.name}")
 
 
 def demo_gpu():
@@ -130,10 +138,15 @@ def demo_gpu():
     print("network output device:", net(X).device)
 
 
+def main():
+    """默认只打印可选入口，避免直接运行脚本时把所有演示一次跑完。"""
+    print("Chapter 5 可用入口：")
+    print("- inspect_parameters()")
+    print("- demo_custom_layers()")
+    print("- demo_composition()")
+    print("- save_and_load_parameters()")
+    print("- demo_gpu()")
+
+
 if __name__ == "__main__":
-    # inspect_parameters()
-    # demo_custom_layers()
-    # demo_composition()
-    # save_and_load_parameters()
-    # demo_gpu()
-    print("chapter5.py 已创建且不依赖 d2l。请按需取消注释对应示例。")
+    main()

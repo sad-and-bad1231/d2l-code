@@ -1,9 +1,11 @@
-# RNN
-#
-# 这是我跟写《动手学深度学习》RNN 章节时整理的代码。
-# 文件现在按“数据准备 -> 从零实现 RNN -> PyTorch 简洁实现 -> 训练入口”组织，
-# 方便复习时按模块阅读，也避免 import 这个文件时直接开始训练。
+"""Chapter 8: 循环神经网络。
 
+1.数据准备
+2.从零实现RNN
+3.简洁实现
+4.切换入口
+
+"""
 import collections
 import math
 import random
@@ -419,9 +421,14 @@ def run_torch_rnn(num_hiddens=256, batch_size=32, num_steps=35, num_epochs=500, 
     train_ch8(net, train_iter, vocab, lr, num_epochs, device)
 
 
+def main():
+    """默认只打印可选入口，避免直接运行脚本时连跑多个长训练。"""
+    print("Chapter 8 可用入口：")
+    print("- run_scratch_rnn()")
+    print("- run_scratch_rnn_random_iter()")
+    print("- run_torch_rnn()")
+
+
 if __name__ == "__main__":
-    # 建议按需取消注释，只运行你当前正在学习的部分。
-    # run_scratch_rnn()
-    # run_scratch_rnn_random_iter()
-    # run_torch_rnn()
-    print("chapter8.py 已切换为不依赖 d2l。请按需取消注释对应示例。")
+    main()
+

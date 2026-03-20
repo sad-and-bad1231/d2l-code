@@ -1,6 +1,5 @@
 """Chapter 7: 现代卷积神经网络。
 
-本文件整理了 d2l 第 7 章常见模型:
 - AlexNet
 - VGG
 - NiN
@@ -205,7 +204,9 @@ def batch_norm(X, gamma, beta, moving_mean, moving_var, eps, momentum):
         moving_mean = momentum * moving_mean + (1.0 - momentum) * mean
         moving_var = momentum * moving_var + (1.0 - momentum) * var
     Y = gamma * X_hat + beta
-    return Y, moving_mean.data, moving_var.data
+    # 返回 detached 统计量，表示“下一轮继续使用的滑动均值/方差”，
+    # 但不把它们并入当前反向传播图。
+    return Y, moving_mean.detach(), moving_var.detach()
 
 
 class BatchNorm(nn.Module):
@@ -441,26 +442,20 @@ def train_model(net, batch_size, resize, lr, num_epochs, device=None):
     d2l.train_ch6(net, train_iter, test_iter, num_epochs, lr, device)
 
 
+def main():
+    """默认只打印可选入口。
+
+    Chapter 7 的每个模型训练都比较耗时，直接运行脚本时不应自动串行执行全部网络。
+    """
+    print("Chapter 7 可用入口：")
+    print("- net = build_alexnet(); train_model(net, batch_size=128, resize=224, lr=0.01, num_epochs=10)")
+    print("- net = build_vgg(small_vgg_arch()); train_model(net, batch_size=128, resize=224, lr=0.05, num_epochs=10)")
+    print("- net = build_nin(); train_model(net, batch_size=128, resize=224, lr=0.1, num_epochs=10)")
+    print("- net = build_googlenet(); train_model(net, batch_size=128, resize=96, lr=0.1, num_epochs=10)")
+    print("- net = build_lenet_with_batchnorm(); train_model(net, batch_size=256, resize=None, lr=0.1, num_epochs=10)")
+    print("- net = build_resnet18(); train_model(net, batch_size=256, resize=96, lr=0.05, num_epochs=10)")
+    print("- net = build_densenet(); train_model(net, batch_size=256, resize=96, lr=0.1, num_epochs=10)")
+
+
 if __name__ == "__main__":
-    # 按需选择一个模型训练，不要一次性全部运行。
-    # net = build_alexnet()
-    # train_model(net, batch_size=128, resize=224, lr=0.01, num_epochs=10)
-
-    # net = build_vgg(small_vgg_arch())
-    # train_model(net, batch_size=128, resize=224, lr=0.05, num_epochs=10)
-
-    # net = build_nin()
-    # train_model(net, batch_size=128, resize=224, lr=0.1, num_epochs=10)
-
-    # net = build_googlenet()
-    # train_model(net, batch_size=128, resize=96, lr=0.1, num_epochs=10)
-
-    # net = build_lenet_with_batchnorm()
-    # train_model(net, batch_size=256, resize=None, lr=0.1, num_epochs=10)
-
-    # net = build_resnet18()
-    # train_model(net, batch_size=256, resize=96, lr=0.05, num_epochs=10)
-
-    # net = build_densenet()
-    # train_model(net, batch_size=256, resize=96, lr=0.1, num_epochs=10)
-    print("chapter7.py 已切换为不依赖 d2l。请按需取消注释对应示例。")
+    main()
