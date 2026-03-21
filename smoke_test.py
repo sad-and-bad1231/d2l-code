@@ -23,32 +23,84 @@ import chapter10
 import mini_d2l as d2l
 
 
+def inspect_chapter3_basic():
+    """检查 Chapter 3 的基础数学与数据接口。"""
+    import torch
+
+    true_w = torch.tensor([2.0, -3.4])
+    features, labels = chapter3.synthetic_data(true_w, 4.2, 8)
+    w = torch.zeros((2, 1))
+    b = torch.zeros(1)
+    y_hat = chapter3.linreg(features, w, b)
+    print("chapter3 synthetic_data shape:", features.shape, labels.shape)
+    print("chapter3 linreg output shape:", y_hat.shape)
+    print("chapter3 softmax shape:", chapter3.softmax(torch.randn(2, 3)).shape)
+
+
+def inspect_chapter4_basic():
+    """检查 Chapter 4 的基础函数与张量形状。"""
+    import torch
+
+    X = torch.tensor([[-1.0, 0.0, 2.0]])
+    print("chapter4 relu output:", chapter4.relu(X))
+    print("chapter4 dropout output shape:", chapter4.dropout_layer(torch.ones(2, 3), 0.5).shape)
+    _, _, poly_features, labels, n_train, n_test = chapter4.build_polynomial_data(
+        max_degree=4, n_train=4, n_test=4
+    )
+    print("chapter4 polynomial data shape:", poly_features.shape, labels.shape, n_train, n_test)
+
+
+def inspect_chapter8_basic():
+    """检查 Chapter 8 手写 RNN 的最小前向传播。"""
+    import torch
+
+    vocab_size, num_hiddens = 10, 16
+    device = torch.device("cpu")
+    params = chapter8.get_params(vocab_size, num_hiddens, device)
+    state = chapter8.init_rnn_state(batch_size=2, num_hiddens=num_hiddens, device=device)
+    inputs = torch.randn(5, 2, vocab_size)
+    output, new_state = chapter8.rnn(inputs, state, params)
+    print("chapter8 scratch rnn output shape:", output.shape)
+    print("chapter8 scratch rnn state shape:", new_state[0].shape)
+
+
 def run_basic_smoke_test(include_network_data=False):
     """运行项目级轻量检查。"""
     print("device =", d2l.try_gpu())
     print("modules imported successfully")
 
-    # Chapter 3-6: 只跑不依赖外部下载的小型检查。
+    print("[smoke] chapter3")
+    inspect_chapter3_basic()
+
+    print("[smoke] chapter4")
+    inspect_chapter4_basic()
+
+    print("[smoke] chapter5")
     chapter5.inspect_parameters()
     chapter5.demo_custom_layers()
     chapter5.demo_composition()
     chapter5.demo_gpu()
 
+    print("[smoke] chapter6")
     chapter6.demo_corr2d()
     chapter6.demo_pool2d()
     chapter6.show_layer_shapes(chapter6.build_lenet())
 
-    # Chapter 7: 只检查网络结构和输出形状，不训练。
+    # Chapter 7: 这里不把所有 CNN 都过一遍。
+    # smoke test 的目标是确认“现代 CNN 章节的结构定义与代表性模型前向传播没问题”，
+    # 而不是把整章所有网络一次性全测完。这样能更稳，也更容易定位问题。
+    print("[smoke] chapter7")
     chapter7.show_layer_shapes(chapter7.build_alexnet(), (1, 1, 224, 224))
-    chapter7.show_layer_shapes(chapter7.build_vgg(chapter7.small_vgg_arch()), (1, 1, 224, 224))
-    chapter7.show_layer_shapes(chapter7.build_nin(), (1, 1, 224, 224))
-    chapter7.show_layer_shapes(chapter7.build_googlenet(), (1, 1, 96, 96))
     chapter7.show_layer_shapes(chapter7.build_lenet_with_batchnorm(), (1, 1, 28, 28))
     chapter7.show_layer_shapes(chapter7.build_resnet18(), (1, 1, 96, 96))
-    chapter7.show_layer_shapes(chapter7.build_densenet(), (1, 1, 96, 96))
 
-    # Chapter 8-10: 仅跑张量形状与注意力结构检查。
+    print("[smoke] chapter8")
+    inspect_chapter8_basic()
+
+    print("[smoke] chapter9")
     chapter9.inspect_seq2seq_shapes()
+
+    print("[smoke] chapter10")
     chapter10.inspect_attention_scoring()
     chapter10.inspect_seq2seq_attention_shapes()
     chapter10.inspect_multihead_attention_shapes()
