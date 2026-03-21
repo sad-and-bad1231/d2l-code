@@ -95,12 +95,16 @@ def inspect_parameters():
 
 
 def demo_custom_layers():
+    """演示自定义层的行为。"""
     X = torch.rand(2, 20)
     centered = CenteredLayer()
     print("centered mean:", float(centered(torch.tensor([1.0, 2.0, 3.0])).mean()))
 
     net = nn.Sequential(nn.Linear(8, 128), CenteredLayer())
-    print("sequential centered output mean:", float(net(torch.rand(4, 8)).mean()))
+    print(
+        "sequential centered output mean:",
+        float(net(torch.rand(4, 8)).mean().detach()),
+    )
 
     dense = MyLinear(5, 3)
     print("custom linear output shape:", dense(torch.rand(2, 5)).shape)
@@ -130,8 +134,10 @@ def save_and_load_parameters():
 
 
 def demo_gpu():
+    """演示张量和网络一起迁移到 GPU。"""
     device = d2l.try_gpu()
-    X = torch.ones((2, 3), device=device)
+    # `build_mlp()` 的第一层输入维度是 20，因此这里也必须构造 20 维特征。
+    X = torch.ones((2, 20), device=device)
     net = build_mlp().to(device)
     print("device:", device)
     print("tensor device:", X.device)
