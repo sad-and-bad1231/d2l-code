@@ -168,8 +168,16 @@ def plot(
         Y = X
         X = None
 
-    if not isinstance(Y, (list, tuple)):
-        Y = [Y]
+    def _split_series(values):
+        if isinstance(values, torch.Tensor):
+            if values.ndim <= 1:
+                return [values]
+            return [row for row in values]
+        if not isinstance(values, (list, tuple)):
+            return [values]
+        return list(values)
+
+    Y = _split_series(Y)
 
     if fmts is None:
         fmts = ["-"] * len(Y)
