@@ -143,6 +143,98 @@ class Animator:
         plt.show()
 
 
+def plot(
+    X,
+    Y=None,
+    xlabel=None,
+    ylabel=None,
+    legend=None,
+    xlim=None,
+    ylim=None,
+    xscale="linear",
+    yscale="linear",
+    fmts=None,
+    figsize=(3.5, 2.5),
+) -> None:
+    """轻量绘图辅助函数。"""
+
+    if Y is None:
+        Y = X
+        X = None
+
+    def _split_series(values):
+        if isinstance(values, torch.Tensor):
+            if values.ndim <= 1:
+                return [values]
+            return [row for row in values]
+        if not isinstance(values, (list, tuple)):
+            return [values]
+        return list(values)
+
+    Y = _split_series(Y)
+
+    if fmts is None:
+        fmts = ["-"] * len(Y)
+
+    plt.figure(figsize=figsize)
+    for idx, y in enumerate(Y):
+        fmt = fmts[idx] if idx < len(fmts) else "-"
+        label = legend[idx] if legend and idx < len(legend) else None
+
+        if X is None:
+            plt.plot(y, fmt, label=label)
+        elif isinstance(X, (list, tuple)) and len(X) == len(Y):
+            plt.plot(X[idx], y, fmt, label=label)
+        else:
+            plt.plot(X, y, fmt, label=label)
+
+    if xlabel:
+        plt.xlabel(xlabel)
+    if ylabel:
+        plt.ylabel(ylabel)
+    if xlim:
+        plt.xlim(xlim)
+    if ylim:
+        plt.ylim(ylim)
+    plt.xscale(xscale)
+    plt.yscale(yscale)
+    if legend:
+        plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def show_heatmaps(
+    matrices,
+    xlabel,
+    ylabel,
+    titles=None,
+    figsize=(2.5, 2.5),
+    cmap="Reds",
+) -> None:
+    """显示一组注意力热图。"""
+    num_rows, num_cols = matrices.shape[0], matrices.shape[1]
+    fig, axes = plt.subplots(
+        num_rows, num_cols, figsize=figsize, sharex=True, sharey=True, squeeze=False
+    )
+
+    pcm = None
+    for i, (row_axes, row_matrices) in enumerate(zip(axes, matrices)):
+        for j, (ax, matrix) in enumerate(zip(row_axes, row_matrices)):
+            pcm = ax.imshow(matrix.detach().cpu().numpy(), cmap=cmap)
+            if i == num_rows - 1:
+                ax.set_xlabel(xlabel)
+            if j == 0:
+                ax.set_ylabel(ylabel)
+            if titles and j < len(titles):
+                ax.set_title(titles[j])
+
+    if pcm is not None:
+        fig.colorbar(pcm, ax=axes, shrink=0.6)
+    plt.tight_layout()
+    plt.show()
+
+
 def grad_clipping(net, theta: float) -> None:
     """裁剪梯度范数，避免 RNN 梯度爆炸。"""
     if isinstance(net, nn.Module):
@@ -245,6 +337,14 @@ def truncate_pad(line, num_steps: int, padding_token: int):
     if len(line) > num_steps:
         return line[:num_steps]
     return line + [padding_token] * (num_steps - len(line))
+
+
+def sequence_mask(X, valid_len, value=0):
+    """按有效长度屏蔽张量中的无效位置。"""
+    maxlen = X.size(1)
+    mask = torch.arange(maxlen, device=X.device)[None, :] < valid_len[:, None]
+    X[~mask] = value
+    return X
 
 
 def load_array(data_arrays, batch_size: int, is_train: bool = True):
