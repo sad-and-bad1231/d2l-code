@@ -1,7 +1,7 @@
 """整仓轻量检查脚本。
 
 用途：
-- 在 Colab 或本地环境中快速确认 chapter3-11 与 mini_d2l 可以正常导入；
+- 在 Colab 或本地环境中快速确认 chapter3-12 与 mini_d2l 可以正常导入；
 - 只执行轻量级 shape 检查和小型演示，不启动长时间训练；
 - 尽量避开需要联网下载的大数据集，只有显式启用时才检查相关部分。
 
@@ -21,6 +21,7 @@ import chapter8
 import chapter9
 import chapter10
 import chapter11
+import chapter12
 import mini_d2l as d2l
 
 
@@ -75,6 +76,20 @@ def inspect_chapter11_basic():
     print("chapter11 scheduler samples:", factor_lrs, cosine_lrs)
 
 
+def inspect_chapter12_basic():
+    """检查 Chapter 12 的设备辅助与多 GPU 基础接口。"""
+    devices = chapter12.inspect_hardware()
+    X = torch.randn(8, 1, 28, 28)
+    y = torch.arange(8)
+    X_shards, y_shards = chapter12.split_batch(X, y, devices)
+    buffers = [torch.ones(2, device=device) for device in devices[: min(2, len(devices))]]
+    reduced = chapter12.allreduce(buffers)
+    jit_stats = chapter12.benchmark_jit(batch_size=32, num_iters=2)
+    print("chapter12 shard shapes:", [tuple(x.shape) for x in X_shards])
+    print("chapter12 reduced tensors:", [tensor.detach().cpu().tolist() for tensor in reduced])
+    print("chapter12 jit stats:", jit_stats)
+
+
 def run_basic_smoke_test(include_network_data=False):
     """运行项目级轻量检查。"""
     print("device =", d2l.try_gpu())
@@ -119,6 +134,9 @@ def run_basic_smoke_test(include_network_data=False):
 
     print("[smoke] chapter11")
     inspect_chapter11_basic()
+
+    print("[smoke] chapter12")
+    inspect_chapter12_basic()
 
     if include_network_data:
         print("running optional network-data checks...")

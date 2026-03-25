@@ -18,6 +18,7 @@
 - `chapter9.py`
 - `chapter10.py`
 - `chapter11.py`
+- `chapter12.py`
 - 通用轻量工具层 `mini_d2l.py`
 - 轻量检查脚本 `smoke_test.py`
 - Colab 模板 `colab_template.ipynb`
@@ -29,7 +30,7 @@
 - [mini_d2l.py](mini_d2l.py)
   轻量工具层，替代原来常用的 `d2l` 功能，包括数据加载、训练循环、词表、设备选择等。
 
-- [chapter3.py](chapter3.py) 到 [chapter11.py](chapter11.py)
+- [chapter3.py](chapter3.py) 到 [chapter12.py](chapter12.py)
   章节代码。默认入口不会直接开始长时间训练，而是打印本章可用函数，建议你按需手动调用。
 
 - [smoke_test.py](smoke_test.py)
@@ -56,6 +57,7 @@ python chapter3.py
 python chapter6.py
 python chapter8.py
 python chapter11.py
+python chapter12.py
 python smoke_test.py
 ```
 
@@ -68,10 +70,12 @@ python smoke_test.py
 import chapter9
 import chapter10
 import chapter11
+import chapter12
 
 chapter9.inspect_seq2seq_shapes()
 chapter10.run_transformer_translation(num_epochs=50)
 chapter11.demo_schedulers(num_steps=10)
+chapter12.inspect_hardware()
 ```
 
 ## 跨章节依赖说明
@@ -81,6 +85,7 @@ chapter11.demo_schedulers(num_steps=10)
 - `chapter9` 依赖 `mini_d2l.py`
 - `chapter10` 依赖 `mini_d2l.py` 和 `chapter9.py`
 - `chapter11` 依赖 `mini_d2l.py`
+- `chapter12` 依赖 `mini_d2l.py` 和 `chapter7.py`
 
 这意味着：
 - 把整个仓库目录一起上传到 Colab 是安全的
@@ -109,6 +114,7 @@ https://github.com/sad-and-bad1231/d2l-code.git
 - `chapter8/9` 的文本数据会下载到仓库内 `data/` 目录
 - `chapter10` 的翻译与 Transformer 相关实验依赖 `chapter9` 中的数据与 seq2seq 基础设施
 - `chapter11` 的优化器实验默认使用空气动力学噪声数据集，并会下载到仓库内 `data/` 目录
+- `chapter12` 的多 GPU/性能实验会根据当前设备环境自动降级；在 Colab 单 GPU 下可以运行轻量 demo 和 concise 训练
 - 当前默认实现优先保证“教学流程清楚 + Colab 可运行”，不是工业级训练框架
 
 ## 更新中......

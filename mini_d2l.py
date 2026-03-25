@@ -40,6 +40,13 @@ def try_gpu(i: int = 0) -> torch.device:
     return torch.device("cpu")
 
 
+def try_all_gpus() -> list[torch.device]:
+    """返回当前可用的全部 GPU；若没有，则返回仅含 CPU 的列表。"""
+    if torch.cuda.device_count() == 0:
+        return [torch.device("cpu")]
+    return [torch.device(f"cuda:{i}") for i in range(torch.cuda.device_count())]
+
+
 class Timer:
     """记录累计耗时。"""
 
@@ -56,6 +63,21 @@ class Timer:
 
     def sum(self) -> float:
         return sum(self.times)
+
+
+class Benchmark:
+    """上下文管理器风格的轻量计时器。"""
+
+    def __init__(self, description: str = "done") -> None:
+        self.description = description
+        self.timer = Timer()
+
+    def __enter__(self):
+        self.timer.start()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        print(f"{self.description}: {self.timer.stop():.4f} sec")
 
 
 class Accumulator:
