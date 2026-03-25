@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 import matplotlib.pyplot as plt
+from matplotlib import patches
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -163,6 +164,11 @@ class Animator:
         if self.legend:
             plt.legend()
         plt.show()
+
+
+def set_figsize(figsize=(3.5, 2.5)) -> None:
+    """设置 matplotlib 默认图像大小。"""
+    plt.rcParams["figure.figsize"] = figsize
 
 
 def plot(
@@ -478,6 +484,49 @@ def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):
             ax.set_title(titles[i])
     plt.tight_layout()
     plt.show()
+
+
+def bbox_to_rect(bbox, color):
+    """把 `[xmin, ymin, xmax, ymax]` 转成 matplotlib 矩形。"""
+    return patches.Rectangle(
+        xy=(bbox[0], bbox[1]),
+        width=bbox[2] - bbox[0],
+        height=bbox[3] - bbox[1],
+        fill=False,
+        edgecolor=color,
+        linewidth=2,
+    )
+
+
+def show_bboxes(axes, bboxes, labels=None, colors=None):
+    """在图像坐标轴上叠加边界框。"""
+
+    def _make_list(obj, default_values=None):
+        if obj is None:
+            obj = default_values
+        if not isinstance(obj, (list, tuple)):
+            obj = [obj]
+        return obj
+
+    labels = _make_list(labels)
+    colors = _make_list(colors, ["b", "g", "r", "m", "c"])
+
+    for i, bbox in enumerate(bboxes):
+        color = colors[i % len(colors)]
+        rect = bbox_to_rect(bbox.detach().cpu().numpy() if torch.is_tensor(bbox) else bbox, color)
+        axes.add_patch(rect)
+        if labels and i < len(labels):
+            text_color = "k" if color == "w" else "w"
+            axes.text(
+                rect.xy[0],
+                rect.xy[1],
+                labels[i],
+                va="center",
+                ha="center",
+                fontsize=9,
+                color=text_color,
+                bbox=dict(facecolor=color, lw=0),
+            )
 
 
 def load_data_fashion_mnist(batch_size, resize=None, root: Path | str = DATA_DIR / "fashion-mnist"):

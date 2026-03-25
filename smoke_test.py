@@ -1,7 +1,7 @@
 """整仓轻量检查脚本。
 
 用途：
-- 在 Colab 或本地环境中快速确认 chapter3-12 与 mini_d2l 可以正常导入；
+- 在 Colab 或本地环境中快速确认 chapter3-13 与 mini_d2l 可以正常导入；
 - 只执行轻量级 shape 检查和小型演示，不启动长时间训练；
 - 尽量避开需要联网下载的大数据集，只有显式启用时才检查相关部分。
 
@@ -22,6 +22,7 @@ import chapter9
 import chapter10
 import chapter11
 import chapter12
+import chapter13
 import mini_d2l as d2l
 
 
@@ -90,6 +91,19 @@ def inspect_chapter12_basic():
     print("chapter12 jit stats:", jit_stats)
 
 
+def inspect_chapter13_basic():
+    """检查 Chapter 13 的视觉主线核心 shape 与损失。"""
+    chapter13.inspect_bbox_conversions()
+    anchors, keep = chapter13.inspect_anchor_shapes()
+    tinyssd_out = chapter13.inspect_tinyssd_shapes()
+    fcn_out = chapter13.inspect_fcn_shapes()
+    chapter13.inspect_style_transfer_losses()
+    print("chapter13 anchors sample shape:", anchors.shape)
+    print("chapter13 nms keep:", keep.tolist())
+    print("chapter13 tinyssd shapes:", [tuple(x.shape) for x in tinyssd_out])
+    print("chapter13 fcn shape:", tuple(fcn_out.shape))
+
+
 def run_basic_smoke_test(include_network_data=False):
     """运行项目级轻量检查。"""
     print("device =", d2l.try_gpu())
@@ -137,6 +151,9 @@ def run_basic_smoke_test(include_network_data=False):
 
     print("[smoke] chapter12")
     inspect_chapter12_basic()
+
+    print("[smoke] chapter13")
+    inspect_chapter13_basic()
 
     if include_network_data:
         print("running optional network-data checks...")
