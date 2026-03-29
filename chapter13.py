@@ -445,14 +445,16 @@ class TinySSD(nn.Module):
         return anchors, cls_preds, bbox_preds
 
 
-def train_tinyssd(train_iter, num_epochs=5, lr=0.2, device=None):
-    """训练 TinySSD 的最小入口。
+def train_tinyssd_debug(train_iter, num_epochs=5, lr=0.2, device=None):
+    """用于调通 TinySSD 前向/反向图的调试训练入口。
 
-    这里主要保留模型主线和前向/损失组织方式，
-    更完整的 target 编码与检测评估可按需再扩展。
+    注意：
+    - 这里不会做真实的 anchor 匹配与框回归目标构造；
+    - 因此它只能验证训练图是否可运行，不能产出有效检测器。
     """
     if device is None:
         device = d2l.try_gpu()
+    print("warning: train_tinyssd_debug() 仅用于调试计算图，不会训练出有效检测器。")
     net = TinySSD(num_classes=1).to(device)
     trainer = torch.optim.SGD(net.parameters(), lr=lr, weight_decay=5e-4)
     cls_loss = nn.CrossEntropyLoss(reduction="none")
@@ -851,7 +853,7 @@ def main():
 
     # 以下数据集或训练任务较重，按需取消注释。
     # train_iter, val_iter = load_data_bananas(batch_size=8)
-    # train_tinyssd(train_iter, num_epochs=5)
+    # train_tinyssd_debug(train_iter, num_epochs=5)
     # train_iter, test_iter = load_data_voc(batch_size=4, crop_size=(320, 480))
     # train_fcn(train_iter, test_iter, num_epochs=5)
 

@@ -629,7 +629,7 @@ def _get_batch_loss_bert(net, loss, vocab_size, tokens_X, segments_X, valid_lens
     return mlm_l, nsp_l, l
 
 
-def train_bert(train_iter, net, loss, vocab_size, devices, num_steps):
+def train_bert(train_iter, net, vocab_size, devices, num_steps):
     """BERT 最小训练入口。"""
     net = nn.DataParallel(net, device_ids=[device.index for device in devices if device.type == "cuda"]) \
         if len([d for d in devices if d.type == "cuda"]) > 1 else net
@@ -651,7 +651,7 @@ def train_bert(train_iter, net, loss, vocab_size, devices, num_steps):
             trainer.zero_grad()
             timer.start()
             mlm_l, nsp_l, l = _get_batch_loss_bert(
-                net, loss, vocab_size, tokens_X, segments_X, valid_lens_x, pred_positions_X,
+                net, None, vocab_size, tokens_X, segments_X, valid_lens_x, pred_positions_X,
                 mlm_weights_X, mlm_Y, nsp_y
             )
             l.backward()
@@ -709,7 +709,11 @@ def inspect_bert_shapes():
 
 def main():
     """默认只做轻量检查。"""
-    inspect_ptb_batch()
+    try:
+        inspect_ptb_batch()
+    except Exception as err:
+        print(f"跳过 PTB 数据检查：{err}")
+        print("如需运行该部分，请确认当前环境可联网，并允许在项目目录下创建 data 缓存。")
     inspect_bpe()
     inspect_bert_shapes()
 
@@ -735,7 +739,7 @@ def main():
     #     mlm_in_features=128,
     #     nsp_in_features=128,
     # )
-    # train_bert(train_iter, net, nn.CrossEntropyLoss(), len(vocab), [d2l.try_gpu()], num_steps=50)
+    # train_bert(train_iter, net, len(vocab), [d2l.try_gpu()], num_steps=50)
 
 
 if __name__ == "__main__":

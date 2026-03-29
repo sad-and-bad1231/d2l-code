@@ -131,6 +131,7 @@ https://github.com/sad-and-bad1231/d2l-code.git
 - `chapter11` 的优化器实验默认使用空气动力学噪声数据集，并会下载到仓库内 `data/` 目录
 - `chapter12` 的多 GPU/性能实验会根据当前设备环境自动降级；在 Colab 单 GPU 下可以运行轻量 demo 和 concise 训练
 - `chapter13` 的检测/分割/风格迁移部分默认只做轻量检查；涉及 VOC、香蕉检测或 Kaggle 数据时会按需下载或依赖你本地提供的数据目录
+  其中 TinySSD 当前提供的是调试训练入口，用于验证计算图，不代表完整检测训练实现
 - `chapter14` 的词向量/BERT 预训练默认只做轻量检查；PTB、WikiText-2、GloVe 等数据会按需下载
 - `chapter15` 的 IMDb、SNLI 等下游任务入口默认不自动训练；数据会在你手动运行时按需下载
 - 当前默认实现优先保证“教学流程清楚 + Colab 可运行”，不是工业级训练框架

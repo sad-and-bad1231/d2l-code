@@ -57,12 +57,12 @@ def load_data_imdb(batch_size, num_steps=500):
     test_data = read_imdb(data_dir, False)
     train_tokens = tokenize_imdb(train_data[0])
     test_tokens = tokenize_imdb(test_data[0])
-    vocab = d2l.Vocab(train_tokens, min_freq=5)
+    vocab = d2l.Vocab(train_tokens, min_freq=5, reserved_tokens=["<pad>"])
     train_features = torch.tensor(
-        [d2l.truncate_pad(vocab[line], num_steps, vocab["<unk>"]) for line in train_tokens]
+        [d2l.truncate_pad(vocab[line], num_steps, vocab["<pad>"]) for line in train_tokens]
     )
     test_features = torch.tensor(
-        [d2l.truncate_pad(vocab[line], num_steps, vocab["<unk>"]) for line in test_tokens]
+        [d2l.truncate_pad(vocab[line], num_steps, vocab["<pad>"]) for line in test_tokens]
     )
     train_iter = d2l.load_array((train_features, torch.tensor(train_data[1])), batch_size)
     test_iter = d2l.load_array((test_features, torch.tensor(test_data[1])), batch_size, is_train=False)
@@ -202,14 +202,16 @@ class SNLIDataset(torch.utils.data.Dataset):
         all_premise_tokens = d2l.tokenize(dataset[0])
         all_hypothesis_tokens = d2l.tokenize(dataset[1])
         if vocab is None:
-            self.vocab = d2l.Vocab(all_premise_tokens + all_hypothesis_tokens, min_freq=5)
+            self.vocab = d2l.Vocab(
+                all_premise_tokens + all_hypothesis_tokens, min_freq=5, reserved_tokens=["<pad>"]
+            )
         else:
             self.vocab = vocab
         self.premises = torch.tensor(
-            [d2l.truncate_pad(self.vocab[line], num_steps, self.vocab["<unk>"]) for line in all_premise_tokens]
+            [d2l.truncate_pad(self.vocab[line], num_steps, self.vocab["<pad>"]) for line in all_premise_tokens]
         )
         self.hypotheses = torch.tensor(
-            [d2l.truncate_pad(self.vocab[line], num_steps, self.vocab["<unk>"]) for line in all_hypothesis_tokens]
+            [d2l.truncate_pad(self.vocab[line], num_steps, self.vocab["<pad>"]) for line in all_hypothesis_tokens]
         )
         self.labels = torch.tensor(dataset[2])
 
@@ -387,9 +389,19 @@ def train_bert_classifier(net, train_iter, test_iter, lr=1e-4, num_epochs=5, dev
             l.backward()
             optimizer.step()
             metric.add(float(l) * labels.numel(), d2l.accuracy(y_hat, labels), labels.numel())
+        train_l = metric[0] / metric[2]
+        train_acc = metric[1] / metric[2]
+        test_metric = d2l.Accumulator(2)
+        net.eval()
+        with torch.no_grad():
+            for batch in test_iter:
+                tokens_X, segments_X, valid_lens_x, labels = [x.to(device) for x in batch]
+                y_hat = net((tokens_X, segments_X, valid_lens_x))
+                test_metric.add(d2l.accuracy(y_hat, labels), labels.numel())
+        test_acc = test_metric[0] / test_metric[1]
         print(
-            f"epoch {epoch + 1}: train loss {metric[0] / metric[2]:.4f}, "
-            f"train acc {metric[1] / metric[2]:.4f}"
+            f"epoch {epoch + 1}: train loss {train_l:.4f}, "
+            f"train acc {train_acc:.4f}, test acc {test_acc:.4f}"
         )
     return net
 
