@@ -15,6 +15,7 @@ import os
 import random
 import re
 import time
+import tarfile
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -303,14 +304,20 @@ def download(name: str, cache_dir: Path | str = DATA_DIR) -> str:
 
 
 def download_extract(name: str, folder: str | None = None) -> str:
-    """下载并解压 zip 文件。"""
+    """下载并解压 zip 或 tar/tar.gz 文件。"""
     fname = Path(download(name))
     base_dir = fname.parent
     data_dir = fname.with_suffix("")
-    if fname.suffix != ".zip":
-        raise ValueError("当前轻量工具层只处理 zip 数据集")
-    with zipfile.ZipFile(fname, "r") as zip_file:
-        zip_file.extractall(base_dir)
+    if fname.suffix == ".zip":
+        with zipfile.ZipFile(fname, "r") as zip_file:
+            zip_file.extractall(base_dir)
+    elif fname.suffix in {".tar", ".gz"} or fname.name.endswith(".tar.gz"):
+        with tarfile.open(fname, "r:*") as tar_file:
+            tar_file.extractall(base_dir)
+        if fname.name.endswith(".tar.gz"):
+            data_dir = base_dir / fname.name[: -len(".tar.gz")]
+    else:
+        raise ValueError("当前轻量工具层只处理 zip 与 tar/tar.gz 数据集")
     return str(base_dir / folder) if folder else str(data_dir)
 
 

@@ -20,6 +20,8 @@
 - `chapter11.py`
 - `chapter12.py`
 - `chapter13.py`
+- `chapter14.py`
+- `chapter15.py`
 - 通用轻量工具层 `mini_d2l.py`
 - 轻量检查脚本 `smoke_test.py`
 - Colab 模板 `colab_template.ipynb`
@@ -31,7 +33,7 @@
 - [mini_d2l.py](mini_d2l.py)
   轻量工具层，替代原来常用的 `d2l` 功能，包括数据加载、训练循环、词表、设备选择等。
 
-- [chapter3.py](chapter3.py) 到 [chapter13.py](chapter13.py)
+- [chapter3.py](chapter3.py) 到 [chapter15.py](chapter15.py)
   章节代码。默认入口不会直接开始长时间训练，而是打印本章可用函数，建议你按需手动调用。
 
 - [smoke_test.py](smoke_test.py)
@@ -60,6 +62,8 @@ python chapter8.py
 python chapter11.py
 python chapter12.py
 python chapter13.py
+python chapter14.py
+python chapter15.py
 python smoke_test.py
 ```
 
@@ -74,12 +78,16 @@ import chapter10
 import chapter11
 import chapter12
 import chapter13
+import chapter14
+import chapter15
 
 chapter9.inspect_seq2seq_shapes()
 chapter10.run_transformer_translation(num_epochs=50)
 chapter11.demo_schedulers(num_steps=10)
 chapter12.inspect_hardware()
 chapter13.inspect_anchor_shapes()
+chapter14.inspect_bert_shapes()
+chapter15.inspect_nli_model()
 ```
 
 ## 跨章节依赖说明
@@ -91,6 +99,8 @@ chapter13.inspect_anchor_shapes()
 - `chapter11` 依赖 `mini_d2l.py`
 - `chapter12` 依赖 `mini_d2l.py` 和 `chapter7.py`
 - `chapter13` 依赖 `mini_d2l.py`、`chapter7.py` 与 `torchvision`
+- `chapter14` 依赖 `mini_d2l.py` 和 `chapter10.py`
+- `chapter15` 依赖 `mini_d2l.py`、`chapter14.py`
 
 这意味着：
 - 把整个仓库目录一起上传到 Colab 是安全的
@@ -121,6 +131,8 @@ https://github.com/sad-and-bad1231/d2l-code.git
 - `chapter11` 的优化器实验默认使用空气动力学噪声数据集，并会下载到仓库内 `data/` 目录
 - `chapter12` 的多 GPU/性能实验会根据当前设备环境自动降级；在 Colab 单 GPU 下可以运行轻量 demo 和 concise 训练
 - `chapter13` 的检测/分割/风格迁移部分默认只做轻量检查；涉及 VOC、香蕉检测或 Kaggle 数据时会按需下载或依赖你本地提供的数据目录
+- `chapter14` 的词向量/BERT 预训练默认只做轻量检查；PTB、WikiText-2、GloVe 等数据会按需下载
+- `chapter15` 的 IMDb、SNLI 等下游任务入口默认不自动训练；数据会在你手动运行时按需下载
 - 当前默认实现优先保证“教学流程清楚 + Colab 可运行”，不是工业级训练框架
 
 ## 更新中......
