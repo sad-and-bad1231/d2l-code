@@ -1,8 +1,7 @@
 # d2l-code
 
-不依赖 `d2l` 包的个人版 D2L 学习代码库。
+个人版 D2L 学习代码库。
 
-目标很明确：
 - 按照《动手学深度学习》的教学顺序学习
 - 保留核心模型与训练思路
 - 代码实现脱离 `d2l`包
@@ -139,6 +138,5 @@ https://github.com/sad-and-bad1231/d2l-code.git
 ## 更新中......
 
 后续可以继续补：
-- attention / Transformer / BERT 相关章节
 - 更完整的 README 示例图和训练结果
 - 更细的工具层拆分，例如 `trainer.py`、`data.py`、`metrics.py`
