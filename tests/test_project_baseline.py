@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,14 @@ def test_houseprice_keeps_training_behind_main_guard():
 
     assert "def main(" in source
     assert 'if __name__ == "__main__":' in source
+
+
+def test_chapter5_demo_gpu_uses_mlp_compatible_input_shape():
+    source = read_text("chapter5.py")
+    demo_gpu = re.search(r"def demo_gpu\(\):(?P<body>.*?)(?=\n\ndef |\n\nif __name__)", source, re.S)
+
+    assert demo_gpu is not None
+    assert "torch.ones((2, 20)" in demo_gpu.group("body")
 
 
 def test_runtime_and_development_requirements_are_separated():
