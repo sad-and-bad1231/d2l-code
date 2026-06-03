@@ -81,6 +81,8 @@ def inspect_chapter11_basic():
 
 def inspect_chapter12_basic():
     """检查 Chapter 12 的设备辅助与多 GPU 基础接口。"""
+    import torch
+
     devices = chapter12.inspect_hardware()
     X = torch.randn(8, 1, 28, 28)
     y = torch.arange(8)

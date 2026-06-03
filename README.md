@@ -1,59 +1,87 @@
 # d2l-code
 
-不依赖 `d2l` 包的个人版 D2L 学习代码库。
+不依赖第三方 `d2l` 包的个人版《动手学深度学习》学习代码库。
 
-目标很明确：
-- 按照《动手学深度学习》的教学顺序学习
-- 保留核心模型与训练思路
-- 代码实现脱离 `d2l`包
-- 本地和 Colab / Kaggle 都能直接运行
-
-目前已完成：
-- `chapter3.py`
-- `chapter4.py`
-- `chapter5.py`
-- `chapter6.py`
-- `chapter7.py`
-- `chapter8.py`
-- `chapter9.py`
-- `chapter10.py`
-- `chapter11.py`
-- `chapter12.py`
-- `chapter13.py`
-- `chapter14.py`
-- `chapter15.py`
-- 通用轻量工具层 `mini_d2l.py`
-- 轻量检查脚本 `smoke_test.py`
-- Colab 模板 `colab_template.ipynb`
+这个仓库的目标是保留 D2L 的核心教学顺序、模型思路和可运行示例，同时把常用工具函数沉淀到仓库内的 `mini_d2l.py`，方便在本地、Colab 和 Kaggle 中复用。
 
 [Open In Colab](https://colab.research.google.com/github/sad-and-bad1231/d2l-code/blob/main/colab_template.ipynb)
 
-## 项目结构
+## 项目定位
 
-- [mini_d2l.py](mini_d2l.py)
-  轻量工具层，替代原来常用的 `d2l` 功能，包括数据加载、训练循环、词表、设备选择等。
+- 按照《动手学深度学习》的章节顺序学习。
+- 章节代码保持扁平结构，便于直接打开、阅读和运行。
+- 默认脚本入口只打印可用函数或执行轻量检查，不自动启动长时间训练。
+- 数据集按需下载到 `data/`，不会提交到 Git。
+- 当前优先保证教学流程清楚和实验可复现，不是工业级训练框架。
 
-- [chapter3.py](chapter3.py) 到 [chapter15.py](chapter15.py)
-  章节代码。默认入口不会直接开始长时间训练，而是打印本章可用函数，建议你按需手动调用。
+## 目录结构
 
-- [smoke_test.py](smoke_test.py)
-  整仓轻量检查脚本。适合在 Colab 开始正式训练前先跑一遍，确认模块导入、基础 shape 检查和跨章节依赖都没有问题。
-
-- [colab_template.ipynb](colab_template.ipynb)
-  用于在 Colab 上运行本仓库代码的模板 notebook。
-
-- [requirements-colab.txt](requirements-colab.txt)
-  Colab 最小依赖。
-
-## 本地运行
-
-建议使用你现有的 `conda` 环境，至少保证这些包可用：
-
-```bash
-pip install torch torchvision matplotlib numpy pandas
+```text
+.
+├── chapter3.py ... chapter15.py   # 按章节整理的学习代码
+├── mini_d2l.py                    # 仓库内轻量工具层
+├── houseprice.py                  # Kaggle 房价预测示例
+├── smoke_test.py                  # 手动轻量检查入口
+├── tests/                         # pytest 静态与轻量测试
+├── colab_template.ipynb           # Colab 运行模板
+├── requirements.txt               # 运行依赖
+├── requirements-dev.txt           # 开发与 CI 依赖
+└── pyproject.toml                 # Python 工程配置
 ```
 
-然后直接运行某一章：
+## 环境要求
+
+推荐使用 Python 3.10-3.12。当前不把 Python 3.13 作为正式支持目标，因为 PyTorch 与部分教学环境的兼容性更稳妥地落在 3.10-3.12。
+
+安装运行依赖：
+
+```bash
+pip install -r requirements.txt
+```
+
+安装开发依赖：
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+Colab 环境也可以继续使用：
+
+```bash
+pip install -r requirements-colab.txt
+```
+
+## 快速检查
+
+轻量测试：
+
+```bash
+pytest
+```
+
+语法检查：
+
+```bash
+python -m compileall -q .
+```
+
+Lint：
+
+```bash
+ruff check .
+```
+
+手动 smoke test：
+
+```bash
+python smoke_test.py
+```
+
+`smoke_test.py` 会导入多个章节并做小型 shape 检查，需要当前环境已安装 `torch` 和 `torchvision`。它不会默认运行长时间训练，也不会默认下载大型数据集。
+
+## 运行示例
+
+直接运行某一章：
 
 ```bash
 python chapter3.py
@@ -64,13 +92,9 @@ python chapter12.py
 python chapter13.py
 python chapter14.py
 python chapter15.py
-python smoke_test.py
 ```
 
-默认情况下，这些脚本只会打印可用入口，不会自动训练。  
-真正运行实验时，推荐在 Python/Colab 中显式导入模块后调用目标函数，而不是修改脚本文件本身。
-
-例如：
+推荐在 Python、Notebook 或 Colab 中按需导入后调用目标函数：
 
 ```python
 import chapter9
@@ -82,7 +106,7 @@ import chapter14
 import chapter15
 
 chapter9.inspect_seq2seq_shapes()
-chapter10.run_transformer_translation(num_epochs=50)
+chapter10.inspect_transformer_shapes()
 chapter11.demo_schedulers(num_steps=10)
 chapter12.inspect_hardware()
 chapter13.inspect_anchor_shapes()
@@ -90,55 +114,58 @@ chapter14.inspect_bert_shapes()
 chapter15.inspect_nli_model()
 ```
 
-## 跨章节依赖说明
+## 跨章节依赖
 
-- `chapter3` 到 `chapter7` 只依赖 `mini_d2l.py`
-- `chapter8` 主要自包含，但也会使用 `mini_d2l.py` 的通用训练与下载工具
-- `chapter9` 依赖 `mini_d2l.py`
-- `chapter10` 依赖 `mini_d2l.py` 和 `chapter9.py`
-- `chapter11` 依赖 `mini_d2l.py`
-- `chapter12` 依赖 `mini_d2l.py` 和 `chapter7.py`
-- `chapter13` 依赖 `mini_d2l.py`、`chapter7.py` 与 `torchvision`
-- `chapter14` 依赖 `mini_d2l.py` 和 `chapter10.py`
-- `chapter15` 依赖 `mini_d2l.py`、`chapter14.py`
+- `chapter3` 到 `chapter7` 只依赖 `mini_d2l.py`。
+- `chapter8` 使用 `mini_d2l.py` 的通用训练与下载工具。
+- `chapter9` 依赖 `mini_d2l.py`。
+- `chapter10` 依赖 `mini_d2l.py` 和 `chapter9.py`。
+- `chapter11` 依赖 `mini_d2l.py`。
+- `chapter12` 依赖 `mini_d2l.py` 和 `chapter7.py`。
+- `chapter13` 依赖 `mini_d2l.py`、`chapter7.py` 与 `torchvision`。
+- `chapter14` 依赖 `mini_d2l.py` 和 `chapter10.py`。
+- `chapter15` 依赖 `mini_d2l.py`、`chapter14.py`。
+- `houseprice.py` 依赖 `mini_d2l.py`，不再依赖第三方 `d2l` 包。
 
-这意味着：
-- 把整个仓库目录一起上传到 Colab 是安全的
-- 只单独上传 `chapter10.py` 不够，因为它会导入 `chapter9.py`
-- `chapter9/10` 第一次运行翻译相关实验时会下载数据到仓库内 `data/` 目录
+## 数据与下载
+
+- Fashion-MNIST、Time Machine、NMT、PTB、WikiText-2、IMDb、SNLI 等数据会在对应函数首次运行时按需下载。
+- 下载缓存目录默认为仓库内 `data/`，该目录已被 `.gitignore` 忽略。
+- Kaggle 相关示例需要你提供对应比赛数据或手动运行相关入口。
+- CI 和默认 pytest 不下载大数据集，不运行长时间训练。
 
 ## Colab 运行
 
-最简单的方式：
+1. 打开 `colab_template.ipynb`。
+2. 切换到 GPU runtime。
+3. 运行安装和环境检查单元。
+4. 先运行 smoke test 或轻量检查。
+5. 再按章节调用你要跑的实验函数。
 
-1. 打开 `colab_template.ipynb`
-2. 在 Colab 里切换到 GPU runtime
-3. 运行安装和环境检查单元
-4. 先运行 smoke test / 轻量检查单元
-5. 再按章节逐个打开你要跑的实验
-
-如果你想从 GitHub 克隆到 Colab，仓库地址就是：
+也可以从 GitHub 克隆：
 
 ```text
 https://github.com/sad-and-bad1231/d2l-code.git
 ```
 
-## 当前说明
+## 常见问题
 
-- `chapter3/4/6/7` 里的 Fashion-MNIST 使用 `torchvision.datasets.FashionMNIST`
-- `chapter8/9` 的文本数据会下载到仓库内 `data/` 目录
-- `chapter10` 的翻译与 Transformer 相关实验依赖 `chapter9` 中的数据与 seq2seq 基础设施
-- `chapter11` 的优化器实验默认使用空气动力学噪声数据集，并会下载到仓库内 `data/` 目录
-- `chapter12` 的多 GPU/性能实验会根据当前设备环境自动降级；在 Colab 单 GPU 下可以运行轻量 demo 和 concise 训练
-- `chapter13` 的检测/分割/风格迁移部分默认只做轻量检查；涉及 VOC、香蕉检测或 Kaggle 数据时会按需下载或依赖你本地提供的数据目录
-  其中 TinySSD 当前提供的是调试训练入口，用于验证计算图，不代表完整检测训练实现
-- `chapter14` 的词向量/BERT 预训练默认只做轻量检查；PTB、WikiText-2、GloVe 等数据会按需下载
-- `chapter15` 的 IMDb、SNLI 等下游任务入口默认不自动训练；数据会在你手动运行时按需下载
-- 当前默认实现优先保证“教学流程清楚 + Colab 可运行”，不是工业级训练框架
+**为什么不依赖第三方 `d2l` 包？**
 
-## 更新中......
+为了让学习代码更透明，也方便在不同环境中直接复制、调试和修改。常用工具函数集中在 `mini_d2l.py`。
 
-后续可以继续补：
-- attention / Transformer / BERT 相关章节
-- 更完整的 README 示例图和训练结果
-- 更细的工具层拆分，例如 `trainer.py`、`data.py`、`metrics.py`
+**为什么不把代码拆成标准 Python 包？**
+
+这个仓库的主要目标是按章节学习。扁平结构牺牲了一些工程分层，但更容易对照教材阅读。
+
+**为什么 CI 不运行完整训练？**
+
+完整训练耗时长、依赖 GPU 或联网数据。CI 只验证语法、基础工程配置和轻量测试，训练实验建议在本地或 Colab 手动运行。
+
+## 贡献
+
+欢迎通过 PR 改进文档、轻量测试、章节示例和 `mini_d2l.py` 的通用工具。提交前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 许可证
+
+本项目使用 [MIT License](LICENSE)。
