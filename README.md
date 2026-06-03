@@ -14,6 +14,16 @@
 - 数据集按需下载到 `data/`，不会提交到 Git。
 - 当前优先保证教学流程清楚和实验可复现，不是工业级训练框架。
 
+## 当前内容
+
+- `chapter3.py` 到 `chapter15.py`
+- 通用轻量工具层 `mini_d2l.py`
+- Kaggle 房价预测示例 `houseprice.py`
+- 轻量检查脚本 `smoke_test.py`
+- Colab 模板 `colab_template.ipynb`
+- pytest 基线测试 `tests/`
+- CI、依赖、贡献说明和 MIT 许可证
+
 ## 目录结构
 
 ```text
@@ -136,11 +146,12 @@ chapter15.inspect_nli_model()
 
 ## Colab 运行
 
+最简单的方式：
+
 1. 打开 `colab_template.ipynb`。
-2. 切换到 GPU runtime。
-3. 运行安装和环境检查单元。
-4. 先运行 smoke test 或轻量检查。
-5. 再按章节调用你要跑的实验函数。
+2. 在 Colab 里切换到 GPU runtime。
+3. 从上到下运行安装、环境检查、smoke test 和章节示例单元。
+4. 按需修改最后的章节实验单元，不建议直接修改章节脚本文件。
 
 也可以从 GitHub 克隆：
 
@@ -161,6 +172,12 @@ https://github.com/sad-and-bad1231/d2l-code.git
 **为什么 CI 不运行完整训练？**
 
 完整训练耗时长、依赖 GPU 或联网数据。CI 只验证语法、基础工程配置和轻量测试，训练实验建议在本地或 Colab 手动运行。
+
+## 后续方向
+
+- 更完整的 README 示例图和训练结果。
+- 更细的工具层拆分，例如 `trainer.py`、`data.py`、`metrics.py`。
+- 更多章节级轻量检查和 Colab 可复现实验单元。
 
 ## 贡献
 
