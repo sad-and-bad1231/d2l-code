@@ -1,134 +1,91 @@
-# # 实战kaggle比赛：预测房价
-# 下载和缓存数据集
-import hashlib
-import os
-import tarfile
-import zipfile
-import requests
+"""Kaggle 房价预测示例。
 
-DATA_HUB = dict()
-DATA_URL = 'http://d2l-data.s3-accelerate.amazonaws.com/'
+本文件保留 D2L 第 4 章的房价预测流程，但使用仓库内的 `mini_d2l.py`
+提供数据加载和绘图工具，不依赖第三方 `d2l` 包。
+"""
 
-def download(name, cache_dir = os.path.join('..', 'data')):
-    """下载一个DATA_HUB中的文件，返回本地文件名"""
-    assert name in DATA_HUB, f"{name} 不存在于 {DATA_HUB}"
-    url, sha1_hash = DATA_HUB[name]
-    os.makedirs(cache_dir, exist_ok=True)
-    fname = os.path.join(cache_dir, url.split('/')[-1])
-    if os.path.exists(fname):
-        sha1 = hashlib.sha1()
-        with open(fname, 'rb') as f:
-            while True:
-                data = f.read(1048576)
-                if not data:
-                    break
-                sha1.update(data)
-        if sha1.hexdigest() == sha1_hash:
-            return fname # 命中缓存
-    print(f"正在从 {url} 下载 {fname}...")
-    r = requests.get(url, stream=True, verify=True)
-    with open(fname, 'wb') as f:
-        f.write(r.content)
-    print(f"下载完成 {fname}")
-    return fname
+from __future__ import annotations
 
-def download_extract(name, folder=None):
-    """下载并解压zip/tar文件"""
-    fname = download(name)
-    base_dir = os.path.dirname(fname)
-    data_dir, ext = os.path.splitext(fname)
-    if ext == '.zip':
-        fp = zipfile.ZipFile(fname, 'r')
-    elif ext in ('.tar', '.gz'):
-        fp = tarfile.open(fname, 'r')
-    else:
-        assert False, '只有zip/tar文件可以被解压缩'
-    fp.extractall(base_dir)
-    return os.path.join(base_dir, folder) if folder else data_dir
-
-def download_all():
-    """下载DATA_HUB中的所有文件"""
-    for name in DATA_HUB:
-        download(name)
-
-# 读取数据集
 import pandas as pd
-import numpy as np
 import torch
-import torch.nn as nn
-from d2l import torch as d2l
+from torch import nn
 
-DATA_HUB['kaggle_house_pred_train'] = (
-    DATA_URL + 'kaggle_house_pred_train.csv',
-    '585e9cc93e70b39160e7921475f9bcd7d31219ce')
+import mini_d2l as d2l
 
-DATA_HUB['kaggle_house_pred_test'] = (
-    DATA_URL + 'kaggle_house_pred_test.csv',
-    'fa19780a7b011d9b009e8bff8e99922a8ee2eb90')
 
-train_data = pd.read_csv(download('kaggle_house_pred_train'))
-test_data = pd.read_csv(download('kaggle_house_pred_test'))
+d2l.DATA_HUB["kaggle_house_pred_train"] = (
+    d2l.DATA_URL + "kaggle_house_pred_train.csv",
+    "585e9cc93e70b39160e7921475f9bcd7d31219ce",
+)
 
-# 删除ID信息
-all_features = pd.concat((train_data.iloc[:, 1:-1], test_data.iloc[:, 1:]))
+d2l.DATA_HUB["kaggle_house_pred_test"] = (
+    d2l.DATA_URL + "kaggle_house_pred_test.csv",
+    "fa19780a7b011d9b009e8bff8e99922a8ee2eb90",
+)
 
-# 数据预处理
-# 若无法获得测试数据，则可根据训练数据计算均值和标准差
-numeric_features = all_features.dtypes[all_features.dtypes != 'object'].index
-all_features[numeric_features] = all_features[numeric_features].apply(
-    lambda x: (x - x.mean()) / (x.std()))
-# 在标准化数据之后，所有均值消失，因此我们可以将缺失值设置为0
-all_features[numeric_features] = all_features[numeric_features].fillna(0)
 
-# 将离散值转换为指示符
-all_features = pd.get_dummies(all_features, dummy_na=True)
-all_features = all_features.astype(float)
+def load_house_data():
+    """下载并读取 Kaggle 房价预测训练集和测试集。"""
+    train_data = pd.read_csv(d2l.download("kaggle_house_pred_train"))
+    test_data = pd.read_csv(d2l.download("kaggle_house_pred_test"))
+    return train_data, test_data
 
-n_train = train_data.shape[0]
-train_features = torch.tensor(all_features[:n_train].values, dtype=torch.float32)
-test_features = torch.tensor(all_features[n_train:].values, dtype=torch.float32)
-train_labels = torch.tensor(train_data.SalePrice.values.reshape(-1, 1), dtype=torch.float32)
 
-# 训练
-loss = nn.MSELoss()
-in_features = train_features.shape[1]
+def preprocess_house_features(train_data, test_data):
+    """标准化数值特征并对类别特征做 one-hot 编码。"""
+    all_features = pd.concat((train_data.iloc[:, 1:-1], test_data.iloc[:, 1:]))
+    numeric_features = all_features.dtypes[all_features.dtypes != "object"].index
+    all_features[numeric_features] = all_features[numeric_features].apply(lambda x: (x - x.mean()) / x.std())
+    all_features[numeric_features] = all_features[numeric_features].fillna(0)
+    all_features = pd.get_dummies(all_features, dummy_na=True).astype(float)
 
-def get_net():
-    net = nn.Sequential(nn.Linear(in_features, 1))
-    return net
+    n_train = train_data.shape[0]
+    train_features = torch.tensor(all_features[:n_train].values, dtype=torch.float32)
+    test_features = torch.tensor(all_features[n_train:].values, dtype=torch.float32)
+    train_labels = torch.tensor(train_data.SalePrice.values.reshape(-1, 1), dtype=torch.float32)
+    return train_features, test_features, train_labels
+
+
+def get_net(num_inputs: int):
+    """创建线性回归模型。"""
+    return nn.Sequential(nn.Linear(num_inputs, 1))
+
 
 def log_rmse(net, features, labels):
-    # 为了在取对数时进一步稳定该值，将小于1的值设置为1
-    clipped_preds = torch.clamp(net(features), 1, float('inf'))
+    """计算 Kaggle 房价任务常用的 log RMSE。"""
+    loss = nn.MSELoss()
+    clipped_preds = torch.clamp(net(features), 1, float("inf"))
     rmse = torch.sqrt(loss(torch.log(clipped_preds), torch.log(labels)))
     return rmse.item()
 
-def train(net, train_features, train_labels, test_features, test_labels,
-          num_epochs, learning_rate, weight_decay, batch_size):
+
+def train(net, train_features, train_labels, test_features, test_labels, num_epochs, learning_rate, weight_decay, batch_size):
+    """训练模型并返回训练集与验证集的 log RMSE 曲线。"""
     train_ls, test_ls = [], []
     train_iter = d2l.load_array((train_features, train_labels), batch_size)
-    if test_features is not None:
-        test_iter = d2l.load_array((test_features, test_labels), batch_size)
-    else:
-        test_iter = None
-    # 这里使用的是Adam优化算法
+    test_iter = d2l.load_array((test_features, test_labels), batch_size) if test_features is not None else None
     optimizer = torch.optim.Adam(net.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    for epoch in range(num_epochs):
+    loss = nn.MSELoss()
+
+    for _ in range(num_epochs):
         for X, y in train_iter:
             optimizer.zero_grad()
             l = loss(net(X), y)
             l.backward()
             optimizer.step()
         train_ls.append(log_rmse(net, train_features, train_labels))
-        if test_labels is not None:
+        if test_iter is not None and test_labels is not None:
             test_ls.append(log_rmse(net, test_features, test_labels))
     return train_ls, test_ls
 
-# k折交叉验证
+
 def get_k_fold_data(k, i, X, y):
+    """返回第 i 折交叉验证的训练和验证数据。"""
     assert k > 1
     fold_size = X.shape[0] // k
     X_train, y_train = None, None
+    X_valid, y_valid = None, None
+
     for j in range(k):
         idx = slice(j * fold_size, (j + 1) * fold_size)
         X_part, y_part = X[idx, :], y[idx]
@@ -139,43 +96,63 @@ def get_k_fold_data(k, i, X, y):
         else:
             X_train = torch.cat([X_train, X_part], 0)
             y_train = torch.cat([y_train, y_part], 0)
+
     return X_train, y_train, X_valid, y_valid
 
+
 def k_fold(k, X_train, y_train, num_epochs, learning_rate, weight_decay, batch_size):
+    """执行 k 折交叉验证并返回平均训练和验证 log RMSE。"""
     train_l_sum, valid_l_sum = 0, 0
     for i in range(k):
         data = get_k_fold_data(k, i, X_train, y_train)
-        net = get_net()
+        net = get_net(X_train.shape[1])
         train_ls, valid_ls = train(net, *data, num_epochs, learning_rate, weight_decay, batch_size)
         train_l_sum += train_ls[-1]
         valid_l_sum += valid_ls[-1]
         if i == 0:
-            d2l.plot(list(range(1, num_epochs + 1)), [train_ls, valid_ls],
-                     xlabel='epoch', ylabel='rmse', xlim=[1, num_epochs],
-                     legend=['train', 'valid'], yscale='log')
-        print(f'折{i + 1}，训练log rmse{float(train_ls[-1]):f}, 'f'验证log rmse{float(valid_ls[-1]):f}')
-        return train_l_sum / k, valid_l_sum / k
+            d2l.plot(
+                list(range(1, num_epochs + 1)),
+                [train_ls, valid_ls],
+                xlabel="epoch",
+                ylabel="rmse",
+                xlim=[1, num_epochs],
+                legend=["train", "valid"],
+                yscale="log",
+            )
+        print(f"折{i + 1}，训练log rmse {float(train_ls[-1]):f}，验证log rmse {float(valid_ls[-1]):f}")
 
-# 模型选择
-k, num_epochs, lr, weight_decay, batch_size = 5, 100, 5, 0, 64
-train_l, valid_l = k_fold(k, train_features, train_labels, num_epochs, lr, weight_decay, batch_size)
-print(f'{k}-折验证: 平均训练log rmse: {float(train_l):f}, 'f'平均验证log rmse: {float(valid_l):f}')
+    return train_l_sum / k, valid_l_sum / k
 
-# 提交kaggle预测
-def train_and_pred(train_features, test_features, train_labels, test_data,
-                   num_epochs, learning_rate, weight_decay, batch_size):
-    net = get_net()
-    train_ls, _ = train(net, train_features, train_labels, None, None,
-                        num_epochs, learning_rate, weight_decay, batch_size)
-    d2l.plot(list(range(1, num_epochs + 1)), [train_ls], xlabel='epoch',
-             ylabel='log rmse', xlim=[1, num_epochs], yscale='log')
-    print(f'训练log rmse：{float(train_ls[-1]):f}')
-    # 将网络应用于测试集
+
+def train_and_pred(train_features, test_features, train_labels, test_data, num_epochs, learning_rate, weight_decay, batch_size):
+    """训练最终模型并导出 Kaggle 提交文件。"""
+    net = get_net(train_features.shape[1])
+    train_ls, _ = train(net, train_features, train_labels, None, None, num_epochs, learning_rate, weight_decay, batch_size)
+    d2l.plot(
+        list(range(1, num_epochs + 1)),
+        [train_ls],
+        xlabel="epoch",
+        ylabel="log rmse",
+        xlim=[1, num_epochs],
+        yscale="log",
+    )
+    print(f"训练log rmse：{float(train_ls[-1]):f}")
+
     preds = net(test_features).detach().numpy()
-    # 将其重新格式化以导出到Kaggle
-    test_data['SalePrice'] = pd.Series(preds.reshape(1, -1)[0])
-    submission = pd.concat([test_data['Id'], test_data['SalePrice']], axis=1)
-    submission.to_csv('submission.csv', index=False)
+    test_data["SalePrice"] = pd.Series(preds.reshape(1, -1)[0])
+    submission = pd.concat([test_data["Id"], test_data["SalePrice"]], axis=1)
+    submission.to_csv("submission.csv", index=False)
 
-train_and_pred(train_features, test_features, train_labels, test_data, num_epochs, lr, weight_decay, batch_size)
 
+def main():
+    """运行完整 Kaggle 房价预测示例。"""
+    train_data, test_data = load_house_data()
+    train_features, test_features, train_labels = preprocess_house_features(train_data, test_data)
+    k, num_epochs, lr, weight_decay, batch_size = 5, 100, 5, 0, 64
+    train_l, valid_l = k_fold(k, train_features, train_labels, num_epochs, lr, weight_decay, batch_size)
+    print(f"{k}-折验证: 平均训练log rmse: {float(train_l):f}, 平均验证log rmse: {float(valid_l):f}")
+    train_and_pred(train_features, test_features, train_labels, test_data, num_epochs, lr, weight_decay, batch_size)
+
+
+if __name__ == "__main__":
+    main()
