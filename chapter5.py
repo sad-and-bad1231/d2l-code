@@ -123,7 +123,7 @@ def save_and_load_parameters():
 
 def demo_gpu():
     device = d2l.try_gpu()
-    X = torch.ones((2, 3), device=device)
+    X = torch.ones((2, 20), device=device)
     net = build_mlp().to(device)
     print("device:", device)
     print("tensor device:", X.device)
